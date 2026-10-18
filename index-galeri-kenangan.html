@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Galeri Kenangan Kita</title>
+<style>
+:root{--bg:#100d1c;--panel:#211a35;--line:#49336a;--purple:#9333ea;--text:#fff;--muted:#c8badb;--danger:#b42338}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:var(--bg);color:var(--text)}
+header{text-align:center;padding:34px 15px;background:linear-gradient(135deg,#541a86,#17112c)}
+header h1{font-size:clamp(24px,5vw,34px);margin-bottom:9px}header p{color:#ded1ff;line-height:1.6}
+.container{width:92%;max-width:1050px;margin:24px auto}
+h2{margin:25px 0 14px;color:#d9b5ff;font-size:22px}
+.note{background:#2b2140;border:1px solid var(--line);border-radius:10px;padding:13px;margin:14px 0;color:#eadfff;line-height:1.5;font-size:14px}
+.members{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.member,.upload-box,.photo-card,.admin-box{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
+.member{text-align:center;overflow-wrap:anywhere}
+.avatar{width:55px;height:55px;border-radius:50%;margin:0 auto 10px;display:grid;place-items:center;background:linear-gradient(135deg,#a855f7,#6334a1);font-size:23px}
+.member p{color:var(--muted);font-size:13px;margin-top:7px}
+.role{display:inline-block;border-radius:20px;background:#392650;padding:5px 9px;font-size:11px;margin-top:9px;color:#ead7ff}
+input,textarea,select{width:100%;padding:11px;margin:7px 0;border-radius:8px;border:1px solid #594277;background:#151024;color:white;font:inherit}
+button{background:var(--purple);border:0;color:#fff;padding:10px 13px;border-radius:8px;cursor:pointer;font-weight:bold;margin:4px 3px 0 0}
+button:hover{filter:brightness(1.12)}button.secondary{background:#514365}button.danger{background:var(--danger)}button:disabled{opacity:.45;cursor:not-allowed}
+label{font-size:14px;color:#e4d8f4}
+.photos{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.photo-card{overflow:hidden}.photo-card img{display:block;width:100%;height:190px;object-fit:cover;border-radius:8px;cursor:pointer}
+.photo-card p{margin:10px 0;overflow-wrap:anywhere}.photo-card small{color:var(--muted)}
+.empty{color:#b7a9ca;padding:18px 0}
+.row{display:flex;gap:8px;align-items:center}.row>*{flex:1;min-width:0}
+.hidden{display:none!important}
+footer{text-align:center;padding:25px 12px;color:#b7a9ca;margin-top:30px}
+#viewer{display:none;position:fixed;inset:0;background:#000e;z-index:10;justify-content:center;align-items:center;padding:15px}
+#viewer img{max-width:100%;max-height:85vh;object-fit:contain}
+hr{border:0;border-top:1px solid var(--line);margin:16px 0}
+@media(min-width:700px){.photos{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:480px){.members{grid-template-columns:repeat(2,1fr)}.row{display:block}}
+</style>
+</head>
+<body>
+<header>
+  <h1>💜 Galeri Kenangan Kita</h1>
+  <p>Sembilan teman, sejuta cerita, kenangan selamanya.</p>
+  <p id="who" style="margin-top:10px;font-size:13px"></p>
+</header>
+<main class="container">
+  <div class="note"><strong>Catatan:</strong> Ini versi HTML mandiri. Nama, role, dan foto disimpan di browser ini saja. Untuk admin/owner yang benar-benar aman dan data yang sama di semua HP, perlu login dan database online.</div>
+
+  <h2>👥 Anggota Kita</h2>
+  <section class="members" id="members"></section>
+
+  <section id="ownerPanel" class="admin-box hidden">
+    <h2 style="margin-top:0">👑 Panel Owner — Dayat</h2>
+    <p style="color:var(--muted);line-height:1.5">Owner dapat mengganti nama anggota dan memilih siapa yang menjadi admin. Role member tidak memiliki kontrol pengelolaan anggota.</p>
+    <label for="ownerPin">PIN owner demo</label>
+    <input id="ownerPin" type="password" placeholder="Masukkan PIN demo (default: 2468)">
+    <button id="unlockOwner">Buka panel owner</button>
+    <div id="ownerTools" class="hidden">
+      <hr>
+      <label for="memberPick">Pilih anggota</label>
+      <select id="memberPick"></select>
+      <label for="memberName">Nama anggota</label>
+      <input id="memberName" maxlength="40" placeholder="Nama anggota">
+      <label for="memberRole">Role</label>
+      <select id="memberRole"><option value="member">Member</option><option value="admin">Admin</option><option value="owner">Owner</option></select>
+      <button id="saveMember">Simpan nama dan role</button>
+      <button id="lockOwner" class="secondary">Kunci panel</button>
+      <p id="ownerMessage" style="margin-top:10px;color:#d9b5ff"></p>
+    </div>
+  </section>
+
+  <h2>📸 Tambahkan Kenangan</h2>
+  <section class="upload-box">
+    <form id="photoForm">
+      <label for="photo">Pilih foto (maksimal 2 MB)</label>
+      <input id="photo" type="file" accept="image/*" required>
+      <label for="caption">Cerita atau keterangan foto</label>
+      <textarea id="caption" placeholder="Ceritakan kenangan ini..." rows="3"></textarea>
+      <button type="submit">＋ Simpan Foto</button>
+    </form>
+    <p id="message" style="margin-top:12px;color:#d9b5ff"></p>
+  </section>
+
+  <h2>🖼️ Kenangan Bersama</h2>
+  <section class="photos" id="photos"></section>
+  <p class="empty" id="empty">Belum ada foto. Yuk, tambahkan kenangan pertama!</p>
+</main>
+<footer>Dibuat dengan 💜 untuk persahabatan kita.<br><small>Kenangan hari ini, cerita untuk selamanya.</small></footer>
+<div id="viewer" onclick="this.style.display='none'"><img id="largeImage" alt="Foto kenangan"></div>
+
+<script>
+const STORAGE_KEY = "galeriKenanganRolesV2";
+const PHOTO_KEY = "galeriKenanganPhotosV2";
+const OWNER_PIN = "2468"; // DEMO SAJA: jangan gunakan PIN ini untuk melindungi website publik.
+
+function defaultMembers(){
+  return [
+    {id:"m1",name:"Dayat",role:"owner"},
+    {id:"m2",name:"Anggota 2",role:"member"},
+    {id:"m3",name:"Anggota 3",role:"member"},
+    {id:"m4",name:"Anggota 4",role:"member"},
+    {id:"m5",name:"Anggota 5",role:"member"},
+    {id:"m6",name:"Anggota 6",role:"member"},
+    {id:"m7",name:"Anggota 7",role:"member"},
+    {id:"m8",name:"Anggota 8",role:"member"},
+    {id:"m9",name:"Anggota 9",role:"member"}
+  ];
+}
+let members;
+try { members = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null") || defaultMembers(); }
+catch { members = defaultMembers(); }
+if(!members.some(m=>m.role==="owner")){
+  members[0]={...members[0],name:"Dayat",role:"owner"};
+}
+let photos=[];
+try{photos=JSON.parse(localStorage.getItem(PHOTO_KEY)||"[]");if(!Array.isArray(photos))photos=[];}catch{photos=[];}
+let ownerUnlocked=false;
+
+const $=id=>document.getElementById(id);
+function saveMembers(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(members));return true;}catch{return false;}}
+function savePhotos(){try{localStorage.setItem(PHOTO_KEY,JSON.stringify(photos));return true;}catch{$("message").textContent="Penyimpanan browser penuh. Hapus beberapa foto lalu coba lagi.";return false;}}
+function roleLabel(role){return role==="owner"?"👑 Owner":role==="admin"?"🛡️ Admin":"👤 Member";}
+function renderMembers(){
+  $("members").replaceChildren();
+  members.forEach(m=>{
+    const card=document.createElement("div");card.className="member";
+    const avatar=document.createElement("div");avatar.className="avatar";avatar.textContent=m.role==="owner"?"👑":"💜";
+    const name=document.createElement("h3");name.textContent=m.name;
+    const desc=document.createElement("p");desc.textContent=m.role==="owner"?"Pemilik grup":m.role==="admin"?"Pengelola grup":"Anggota grup";
+    const role=document.createElement("span");role.className="role";role.textContent=roleLabel(m.role);
+    card.append(avatar,name,desc,role);$("members").append(card);
+  });
+  $("who").textContent="Pemilik grup: Dayat";
+  renderMemberOptions();
+}
+function renderMemberOptions(){
+  const select=$("memberPick"),old=select.value;select.replaceChildren();
+  members.forEach(m=>{const o=document.createElement("option");o.value=m.id;o.textContent=m.name+" — "+roleLabel(m.role);select.append(o);});
+  if(members.some(m=>m.id===old))select.value=old;
+  loadSelectedMember();
+}
+function loadSelectedMember(){
+  const m=members.find(x=>x.id===$("memberPick").value)||members[0];
+  if(m){$("memberName").value=m.name;$("memberRole").value=m.role;}
+}
+$("memberPick").addEventListener("change",loadSelectedMember);
+$("unlockOwner").addEventListener("click",()=>{
+  if($("ownerPin").value!==OWNER_PIN){$("ownerMessage").textContent="PIN salah.";return;}
+  ownerUnlocked=true;$("ownerTools").classList.remove("hidden");$("ownerMessage").textContent="Panel demo terbuka.";
+});
+$("lockOwner").addEventListener("click",()=>{ownerUnlocked=false;$("ownerTools").classList.add("hidden");$("ownerPin").value="";});
+$("saveMember").addEventListener("click",()=>{
+  if(!ownerUnlocked){$("ownerMessage").textContent="Buka panel owner terlebih dahulu.";return;}
+  const m=members.find(x=>x.id===$("memberPick").value);
+  const name=$("memberName").value.trim(),role=$("memberRole").value;
+  if(!m||!name){$("ownerMessage").textContent="Nama anggota tidak boleh kosong.";return;}
+  if(m.role==="owner"&&role!=="owner"){ $("ownerMessage").textContent="Role Owner Dayat tidak dapat diubah di demo ini.";return;}
+  if(role==="owner"&&m.id!=="m1"){ $("ownerMessage").textContent="Owner tetap Dayat.";return;}
+  m.name=m.id==="m1"?"Dayat":name;
+  m.role=m.id==="m1"?"owner":role;
+  if(!saveMembers()){$("ownerMessage").textContent="Gagal menyimpan di browser.";return;}
+  renderMembers();$("memberPick").value=m.id;loadSelectedMember();
+  $("ownerMessage").textContent="Perubahan tersimpan di browser ini.";
+});
+function renderPhotos(){
+  $("photos").replaceChildren();$("empty").style.display=photos.length?"none":"block";
+  photos.forEach(photo=>{
+    const card=document.createElement("article");card.className="photo-card";
+    const img=document.createElement("img");img.src=photo.image;img.alt=photo.caption||"Foto kenangan";
+    img.addEventListener("click",()=>{$("largeImage").src=photo.image;$("viewer").style.display="flex";});
+    const caption=document.createElement("p");caption.textContent=photo.caption||"Kenangan bersama 💜";
+    const date=document.createElement("small");date.textContent=photo.date;
+    const del=document.createElement("button");del.className="danger";del.textContent="Hapus foto";
+    // Dalam demo lokal, tombol hapus tersedia untuk pengguna browser ini.
+    del.addEventListener("click",()=>{
+      if(!confirm("Yakin ingin menghapus foto ini dari browser ini?"))return;
+      const old=photos;photos=photos.filter(x=>x.id!==photo.id);
+      if(!savePhotos()){photos=old;return;}renderPhotos();
+    });
+    card.append(img,caption,date,document.createElement("br"),del);$("photos").append(card);
+  });
+}
+$("photoForm").addEventListener("submit",e=>{
+  e.preventDefault();const file=$("photo").files[0],caption=$("caption").value.trim();
+  if(!file)return;
+  if(!file.type.startsWith("image/")){$("message").textContent="File harus berupa gambar.";return;}
+  if(file.size>2*1024*1024){$("message").textContent="Ukuran foto maksimal 2 MB.";return;}
+  if(photos.length>=30){$("message").textContent="Maksimal 30 foto. Hapus foto lama terlebih dahulu.";return;}
+  const reader=new FileReader();
+  reader.onload=()=>{
+    const old=photos;photos=[{id:Date.now()+"-"+Math.random().toString(36).slice(2),image:reader.result,caption,date:new Date().toLocaleDateString("id-ID")},...photos];
+    if(!savePhotos()){photos=old;return;}
+    renderPhotos();$("photoForm").reset();$("message").textContent="Kenangan tersimpan di browser ini 💜";
+  };
+  reader.onerror=()=>$("message").textContent="Foto gagal dibaca. Coba foto lain.";
+  reader.readAsDataURL(file);
+});
+renderMembers();renderPhotos();
+</script>
+</body>
+</html>
